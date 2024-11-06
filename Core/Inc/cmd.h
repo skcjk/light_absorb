@@ -20,3 +20,4 @@ void CMDTask(void *argument);
 void sum(cJSON *root);
 void reboot(cJSON *root);
 void readADC(cJSON *root);
+void switch12V(cJSON *root);

@@ -14,6 +14,7 @@ void CMDTask(void *argument)
         {"sum", sum},
         {"reboot", reboot},
         {"readADC", readADC},
+        {"switch12V", switch12V},
     };
 
     HAL_UART_Receive_IT(&huart1, (uint8_t *)&aRxBuffer, 1);
@@ -104,5 +105,27 @@ void readADC(cJSON *root){
     osMutexAcquire(printMutexHandle, osWaitForever);
     printf("ADC Reading : %d \r\n",ADC_Value);
     printf("True Voltage value : %.4f \r\n",ADC_Value*3.3f/4096);
+    osMutexRelease(printMutexHandle);
+}
+
+void switch12V(cJSON *root){
+    if (root != NULL && cJSON_IsString(root)){
+        if (!strcmp(cJSON_GetStringValue(root), "on")){
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+            osMutexAcquire(printMutexHandle, osWaitForever);
+            printf("12V on\r\n");
+            osMutexRelease(printMutexHandle);
+            return;
+        }
+        if (!strcmp(cJSON_GetStringValue(root), "off")){
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+            osMutexAcquire(printMutexHandle, osWaitForever);
+            printf("12V off\r\n");
+            osMutexRelease(printMutexHandle);
+            return;
+        }
+    }
+    osMutexAcquire(printMutexHandle, osWaitForever);
+    printf("argv error\r\n");
     osMutexRelease(printMutexHandle);
 }
