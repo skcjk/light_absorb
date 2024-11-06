@@ -28,7 +28,8 @@
 #include <string.h>
 #include "fatfs.h"
 #include "stdio.h"
-#define RXBUFFERSIZE  256     //�????大接收字节数
+#include "adc.h"
+#define RXBUFFERSIZE  256     //�????大接收字节数
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -126,103 +127,113 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-  printf("\r\n****** SD test ******\r\n");
+  // printf("\r\n****** SD test ******\r\n");
 
-  res_sd = f_mount(&fs, "0:", 1);
+  // res_sd = f_mount(&fs, "0:", 1);
 
-  /*----------------------- 格式化测�???? ---------------------------*/
-  /* 如果没有文件系统就格式化创建创建文件系统 */
-  if (res_sd == FR_NO_FILESYSTEM)
-  {
-    printf("》SD has no FILESYSTEM, create FILESYSTEM ing\r\n");
-    /* 格式�???? */
-    res_sd = f_mkfs("0:", FM_FAT32, 512, bpData, 512);
-    if (res_sd == FR_OK)
-    {
-      printf("create FILESYSTEM ok\r\n");
-      /* 格式化后，先取消挂载 */
-      res_sd = f_mount(NULL, "0:", 1);
-      /* 重新挂载 */
-      res_sd = f_mount(&fs, "0:", 1);
-    }
-    else
-    {
-      printf("create FILESYSTEM error\r\n");
-      while (1)
-        ;
-    }
-  }
-  else if (res_sd != FR_OK)
-  {
-    printf("mount error(%d)\r\n", res_sd);
-    while (1)
-      ;
-  }
-  else
-  {
-    printf("mount ok\r\n");
-  }
+  // /*----------------------- 格式化测�???? ---------------------------*/
+  // /* 如果没有文件系统就格式化创建创建文件系统 */
+  // if (res_sd == FR_NO_FILESYSTEM)
+  // {
+  //   printf("》SD has no FILESYSTEM, create FILESYSTEM ing\r\n");
+  //   /* 格式�???? */
+  //   res_sd = f_mkfs("0:", FM_FAT32, 512, bpData, 512);
+  //   if (res_sd == FR_OK)
+  //   {
+  //     printf("create FILESYSTEM ok\r\n");
+  //     /* 格式化后，先取消挂载 */
+  //     res_sd = f_mount(NULL, "0:", 1);
+  //     /* 重新挂载 */
+  //     res_sd = f_mount(&fs, "0:", 1);
+  //   }
+  //   else
+  //   {
+  //     printf("create FILESYSTEM error\r\n");
+  //     while (1)
+  //       ;
+  //   }
+  // }
+  // else if (res_sd != FR_OK)
+  // {
+  //   printf("mount error(%d)\r\n", res_sd);
+  //   while (1)
+  //     ;
+  // }
+  // else
+  // {
+  //   printf("mount ok\r\n");
+  // }
 
-  /*--------------------- 文件系统测试：写测试 -----------------------*/
-  /* 打开文件，如果文件不存在则创建它 */
-  printf("\r\n****** read and write test ******\r\n");
-  res_sd = f_open(&fnew, "0:FatFs_read_and_write.txt", FA_CREATE_ALWAYS | FA_WRITE);
-  if (res_sd == FR_OK)
-  {
-    printf("open or creat FatFs_read_and_write.txt ok\r\n");
-    /* 将指定存储区内容写入到文件内 */
-    res_sd = f_write(&fnew, WriteBuffer, sizeof(WriteBuffer), &fnum);
-    if (res_sd == FR_OK)
-    {
-      printf("write_ok:%d\n", fnum);
-      printf("write_data is:\r\n%s\r\n", WriteBuffer);
-    }
-    else
-    {
-      printf("write_error(%d)\n", res_sd);
-    }
-    /* 不再读写，关闭文�???? */
-    f_close(&fnew);
-  }
-  else
-  {
-    printf("open or creat FatFs_read_and_write.txt error:%d\r\n", res_sd);
-  }
+  // /*--------------------- 文件系统测试：写测试 -----------------------*/
+  // /* 打开文件，如果文件不存在则创建它 */
+  // printf("\r\n****** read and write test ******\r\n");
+  // res_sd = f_open(&fnew, "0:FatFs_read_and_write.txt", FA_CREATE_ALWAYS | FA_WRITE);
+  // if (res_sd == FR_OK)
+  // {
+  //   printf("open or creat FatFs_read_and_write.txt ok\r\n");
+  //   /* 将指定存储区内容写入到文件内 */
+  //   res_sd = f_write(&fnew, WriteBuffer, sizeof(WriteBuffer), &fnum);
+  //   if (res_sd == FR_OK)
+  //   {
+  //     printf("write_ok:%d\n", fnum);
+  //     printf("write_data is:\r\n%s\r\n", WriteBuffer);
+  //   }
+  //   else
+  //   {
+  //     printf("write_error(%d)\n", res_sd);
+  //   }
+  //   /* 不再读写，关闭文�???? */
+  //   f_close(&fnew);
+  // }
+  // else
+  // {
+  //   printf("open or creat FatFs_read_and_write.txt error:%d\r\n", res_sd);
+  // }
 
-  /*------------------ 文件系统测试：读测试 --------------------------*/
-  printf("****** read test ******\r\n");
-  res_sd = f_open(&fnew, "0:FatFs_read_and_write.txt", FA_OPEN_EXISTING | FA_READ);
-  if (res_sd == FR_OK)
-  {
-    printf("open ok\r\n");
-    res_sd = f_read(&fnew, ReadBuffer, sizeof(ReadBuffer), &fnum);
-    if (res_sd == FR_OK)
-    {
-      printf("read byte:%d\r\n", fnum);
-      printf("data is:\r\n%s \r\n", ReadBuffer);
-    }
-    else
-    {
-      printf("read error:(%d)\n", res_sd);
-    }
-  }
-  else
-  {
-    printf("open error\r\n");
-  }
-  /* 不再读写，关闭文�???? */
-  f_close(&fnew);
+  // /*------------------ 文件系统测试：读测试 --------------------------*/
+  // printf("****** read test ******\r\n");
+  // res_sd = f_open(&fnew, "0:FatFs_read_and_write.txt", FA_OPEN_EXISTING | FA_READ);
+  // if (res_sd == FR_OK)
+  // {
+  //   printf("open ok\r\n");
+  //   res_sd = f_read(&fnew, ReadBuffer, sizeof(ReadBuffer), &fnum);
+  //   if (res_sd == FR_OK)
+  //   {
+  //     printf("read byte:%d\r\n", fnum);
+  //     printf("data is:\r\n%s \r\n", ReadBuffer);
+  //   }
+  //   else
+  //   {
+  //     printf("read error:(%d)\n", res_sd);
+  //   }
+  // }
+  // else
+  // {
+  //   printf("open error\r\n");
+  // }
+  // /* 不再读写，关闭文�???? */
+  // f_close(&fnew);
 
-  /* 不再使用文件系统，取消挂载文件系�???? */
-  f_mount(NULL, "0:", 1);
+  // /* 不再使用文件系统，取消挂载文件系�???? */
+  // f_mount(NULL, "0:", 1);
 
-  // char *test = "test\r\n";
-  HAL_UART_Receive_IT(&huart1, (uint8_t *)&aRxBuffer, 1);
+  // // char *test = "test\r\n";
+  // HAL_UART_Receive_IT(&huart1, (uint8_t *)&aRxBuffer, 1);
+  uint32_t ADC_Value;
   /* Infinite loop */
   for (;;)
   {
+    HAL_ADC_Start(&hadc1);  
+    HAL_ADC_PollForConversion(&hadc1, 50);
+    if(HAL_IS_BIT_SET(HAL_ADC_GetState(&hadc1), HAL_ADC_STATE_REG_EOC))
+    {
+      ADC_Value = HAL_ADC_GetValue(&hadc1);   //获取AD值
+
+      printf("ADC1 Reading : %d \r\n",ADC_Value);
+      printf("PA3 True Voltage value : %.4f \r\n",ADC_Value*3.3f/4096);
+    }
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7);
-    osDelay(500);
+    osDelay(1000);
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -237,7 +248,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
            the HAL_UART_TxCpltCallback could be implemented in the user file
    */
 
-  if (Uart1_Rx_Cnt >= 255) // 溢出判断
+  if (Uart1_Rx_Cnt >= 255) //
   {
     Uart1_Rx_Cnt = 0;
     memset(RxBuffer, 0x00, sizeof(RxBuffer));
@@ -245,19 +256,19 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   }
   else
   {
-    RxBuffer[Uart1_Rx_Cnt++] = aRxBuffer; // 接收数据转存
+    RxBuffer[Uart1_Rx_Cnt++] = aRxBuffer; //
 
-    if ((RxBuffer[Uart1_Rx_Cnt - 1] == 0x0A) && (RxBuffer[Uart1_Rx_Cnt - 2] == 0x0D)) // 判断结束�????
+    if ((RxBuffer[Uart1_Rx_Cnt - 1] == 0x0A) && (RxBuffer[Uart1_Rx_Cnt - 2] == 0x0D)) //
     {
-      HAL_UART_Transmit(&huart1, (uint8_t *)&RxBuffer, Uart1_Rx_Cnt, 0xFFFF); // 将收到的信息发�?�出�????
+      HAL_UART_Transmit(&huart1, (uint8_t *)&RxBuffer, Uart1_Rx_Cnt, 0xFFFF); //
       while (HAL_UART_GetState(&huart1) == HAL_UART_STATE_BUSY_TX)
-        ; // �????测UART发�?�结�????
+        ; //
       Uart1_Rx_Cnt = 0;
-      memset(RxBuffer, 0x00, sizeof(RxBuffer)); // 清空数组
+      memset(RxBuffer, 0x00, sizeof(RxBuffer)); //
     }
   }
 
-  HAL_UART_Receive_IT(&huart1, (uint8_t *)&aRxBuffer, 1); // 再开启接收中�????
+  HAL_UART_Receive_IT(&huart1, (uint8_t *)&aRxBuffer, 1); //
 }
 /* USER CODE END Application */
 
