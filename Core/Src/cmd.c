@@ -1,9 +1,12 @@
 #include "cmd.h"
 #include "adc.h"
+#include "rtc.h"
 
 extern uint8_t aRxBuffer;	
 extern osMessageQueueId_t rxQueueHandle;
 extern osMutexId_t printMutexHandle;
+extern RTC_TimeTypeDef RTC_TimeStruct;  
+extern RTC_DateTypeDef RTC_DateStruct; 
 
 rxStruct receiveRxFromQueneForCmd;
 
@@ -15,6 +18,7 @@ void CMDTask(void *argument)
         {"reboot", reboot},
         {"readADC", readADC},
         {"switch12V", switch12V},
+        {"time", timeRTC},
     };
 
     HAL_UART_Receive_IT(&huart1, (uint8_t *)&aRxBuffer, 1);
@@ -127,5 +131,36 @@ void switch12V(cJSON *root){
     }
     osMutexAcquire(printMutexHandle, osWaitForever);
     printf("argv error\r\n");
+    osMutexRelease(printMutexHandle);
+}
+
+void timeRTC(cJSON *root){
+    cJSON *timeItem = cJSON_GetObjectItem(root, "setTime");
+    if ((timeItem != NULL && cJSON_IsString(timeItem)))
+    {
+        char *pt = cJSON_GetStringValue(timeItem);
+        BKTime temptimept;
+        temptimept.Year = CharToDec(pt, 2);
+        pt += 2;
+        temptimept.Month = CharToDec(pt, 2);
+        pt += 2;
+        temptimept.Date = CharToDec(pt, 2);
+        pt += 2;
+        temptimept.WeekDay = CharToDec(pt, 1);
+        pt += 1;
+        temptimept.Hours = CharToDec(pt, 2);
+        pt += 2;
+        temptimept.Minutes = CharToDec(pt, 2);
+        pt += 2;
+        temptimept.Seconds = CharToDec(pt, 2);
+        UISet_Time(temptimept.Hours, temptimept.Minutes, temptimept.Seconds, RTC_HOURFORMAT_24);
+        UISet_Date(temptimept.Year, temptimept.Month, temptimept.Date, temptimept.WeekDay);
+    }
+    HAL_RTC_GetTime(&hrtc, &RTC_TimeStruct, RTC_FORMAT_BIN);
+    HAL_RTC_GetDate(&hrtc, &RTC_DateStruct, RTC_FORMAT_BIN);
+    osMutexAcquire(printMutexHandle, osWaitForever);
+    printf("%02d/%02d/%02d\r\n",2000 + RTC_DateStruct.Year, RTC_DateStruct.Month, RTC_DateStruct.Date);
+    printf("%02d:%02d:%02d\r\n",RTC_TimeStruct.Hours, RTC_TimeStruct.Minutes, RTC_TimeStruct.Seconds);
+    printf("\r\n");
     osMutexRelease(printMutexHandle);
 }

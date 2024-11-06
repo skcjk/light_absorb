@@ -21,3 +21,4 @@ void sum(cJSON *root);
 void reboot(cJSON *root);
 void readADC(cJSON *root);
 void switch12V(cJSON *root);
+void timeRTC(cJSON *root);
