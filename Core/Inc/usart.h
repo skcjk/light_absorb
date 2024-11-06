@@ -29,7 +29,12 @@ extern "C" {
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
-
+#define RX_BUF_LEN  256     //
+typedef struct
+{
+    unsigned char rx_buf[RX_BUF_LEN];
+    uint16_t data_length;
+} rxStruct;
 /* USER CODE END Includes */
 
 extern UART_HandleTypeDef huart1;

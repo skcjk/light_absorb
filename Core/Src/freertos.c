@@ -25,19 +25,15 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <string.h>
 #include "fatfs.h"
 #include "stdio.h"
 #include "adc.h"
-#define RXBUFFERSIZE  256     //�????大接收字节数
+#include "usart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-char RxBuffer[RXBUFFERSIZE];   //接收数据
-uint8_t aRxBuffer;			//接收中断缓冲
-uint8_t Uart1_Rx_Cnt = 0;		//接收缓冲计数
-extern UART_HandleTypeDef huart1;
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -67,6 +63,23 @@ const osThreadAttr_t defaultTask_attributes = {
   .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for cmdTask */
+osThreadId_t cmdTaskHandle;
+const osThreadAttr_t cmdTask_attributes = {
+  .name = "cmdTask",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityHigh,
+};
+/* Definitions for rxQueue */
+osMessageQueueId_t rxQueueHandle;
+const osMessageQueueAttr_t rxQueue_attributes = {
+  .name = "rxQueue"
+};
+/* Definitions for printMutex */
+osMutexId_t printMutexHandle;
+const osMutexAttr_t printMutex_attributes = {
+  .name = "printMutex"
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -74,6 +87,7 @@ const osThreadAttr_t defaultTask_attributes = {
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
+extern void CMDTask(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -86,6 +100,9 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
+  /* Create the mutex(es) */
+  /* creation of printMutex */
+  printMutexHandle = osMutexNew(&printMutex_attributes);
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
@@ -99,6 +116,10 @@ void MX_FREERTOS_Init(void) {
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* creation of rxQueue */
+  rxQueueHandle = osMessageQueueNew (3, sizeof(rxStruct), &rxQueue_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -106,6 +127,9 @@ void MX_FREERTOS_Init(void) {
   /* Create the thread(s) */
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
+  /* creation of cmdTask */
+  cmdTaskHandle = osThreadNew(CMDTask, NULL, &cmdTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -131,12 +155,12 @@ void StartDefaultTask(void *argument)
 
   // res_sd = f_mount(&fs, "0:", 1);
 
-  // /*----------------------- 格式化测�???? ---------------------------*/
+  // /*----------------------- 格式化测�?????? ---------------------------*/
   // /* 如果没有文件系统就格式化创建创建文件系统 */
   // if (res_sd == FR_NO_FILESYSTEM)
   // {
   //   printf("》SD has no FILESYSTEM, create FILESYSTEM ing\r\n");
-  //   /* 格式�???? */
+  //   /* 格式�?????? */
   //   res_sd = f_mkfs("0:", FM_FAT32, 512, bpData, 512);
   //   if (res_sd == FR_OK)
   //   {
@@ -182,7 +206,7 @@ void StartDefaultTask(void *argument)
   //   {
   //     printf("write_error(%d)\n", res_sd);
   //   }
-  //   /* 不再读写，关闭文�???? */
+  //   /* 不再读写，关闭文�?????? */
   //   f_close(&fnew);
   // }
   // else
@@ -211,27 +235,17 @@ void StartDefaultTask(void *argument)
   // {
   //   printf("open error\r\n");
   // }
-  // /* 不再读写，关闭文�???? */
+  // /* 不再读写，关闭文�?????? */
   // f_close(&fnew);
 
-  // /* 不再使用文件系统，取消挂载文件系�???? */
+  // /* 不再使用文件系统，取消挂载文件系�?????? */
   // f_mount(NULL, "0:", 1);
 
   // // char *test = "test\r\n";
   // HAL_UART_Receive_IT(&huart1, (uint8_t *)&aRxBuffer, 1);
-  uint32_t ADC_Value;
   /* Infinite loop */
   for (;;)
   {
-    HAL_ADC_Start(&hadc1);  
-    HAL_ADC_PollForConversion(&hadc1, 50);
-    if(HAL_IS_BIT_SET(HAL_ADC_GetState(&hadc1), HAL_ADC_STATE_REG_EOC))
-    {
-      ADC_Value = HAL_ADC_GetValue(&hadc1);   //获取AD值
-
-      printf("ADC1 Reading : %d \r\n",ADC_Value);
-      printf("PA3 True Voltage value : %.4f \r\n",ADC_Value*3.3f/4096);
-    }
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7);
     osDelay(1000);
   }
@@ -240,35 +254,6 @@ void StartDefaultTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-  /* Prevent unused argument(s) compilation warning */
-  UNUSED(huart);
-  /* NOTE: This function Should not be modified, when the callback is needed,
-           the HAL_UART_TxCpltCallback could be implemented in the user file
-   */
 
-  if (Uart1_Rx_Cnt >= 255) //
-  {
-    Uart1_Rx_Cnt = 0;
-    memset(RxBuffer, 0x00, sizeof(RxBuffer));
-    HAL_UART_Transmit(&huart1, (uint8_t *)"数据溢出", 10, 0xFFFF);
-  }
-  else
-  {
-    RxBuffer[Uart1_Rx_Cnt++] = aRxBuffer; //
-
-    if ((RxBuffer[Uart1_Rx_Cnt - 1] == 0x0A) && (RxBuffer[Uart1_Rx_Cnt - 2] == 0x0D)) //
-    {
-      HAL_UART_Transmit(&huart1, (uint8_t *)&RxBuffer, Uart1_Rx_Cnt, 0xFFFF); //
-      while (HAL_UART_GetState(&huart1) == HAL_UART_STATE_BUSY_TX)
-        ; //
-      Uart1_Rx_Cnt = 0;
-      memset(RxBuffer, 0x00, sizeof(RxBuffer)); //
-    }
-  }
-
-  HAL_UART_Receive_IT(&huart1, (uint8_t *)&aRxBuffer, 1); //
-}
 /* USER CODE END Application */
 

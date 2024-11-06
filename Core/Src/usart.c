@@ -21,7 +21,16 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
+#include <string.h>
 #include "stdio.h"
+#include "cmsis_os.h"
+
+extern osMessageQueueId_t rxQueueHandle;
+uint8_t aRxBuffer;			
+rxStruct rxS = {
+        .rx_buf = {0}, 
+        .data_length = 0 
+    };
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart1;
@@ -203,4 +212,32 @@ int fputc(int ch, FILE *f)
  
 }
 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(huart);
+  /* NOTE: This function Should not be modified, when the callback is needed,
+           the HAL_UART_TxCpltCallback could be implemented in the user file
+   */
+
+  if (rxS.data_length >= 255) //
+  {
+    rxS.data_length = 0;
+    memset(rxS.rx_buf, 0x00, sizeof(rxS.rx_buf));
+    // HAL_UART_Transmit(&huart1, (uint8_t *)"rx_overflow", 10, 0xFFFF);
+  }
+  else
+  {
+    rxS.rx_buf[rxS.data_length++] = aRxBuffer; //
+
+    if ((rxS.rx_buf[rxS.data_length - 1] == 0x0A) && (rxS.rx_buf[rxS.data_length - 2] == 0x0D)) //
+    {
+      osMessageQueuePut(rxQueueHandle, &rxS, 0, 0);
+      rxS.data_length = 0;
+      memset(rxS.rx_buf, 0x00, sizeof(rxS.rx_buf));
+    }
+  }
+
+  HAL_UART_Receive_IT(&huart1, (uint8_t *)&aRxBuffer, 1); //
+}
 /* USER CODE END 1 */
