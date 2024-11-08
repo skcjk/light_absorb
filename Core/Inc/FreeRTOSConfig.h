@@ -180,7 +180,6 @@ placed into the low power state respectively. */
 #if configUSE_TICKLESS_IDLE == 1
 #define configPRE_SLEEP_PROCESSING(__x__)                           \
                                        do {                         \
-                                         __x__ = 0;                 \
                                          PreSleepProcessing(__x__); \
                                       }while(0)
 #define configPOST_SLEEP_PROCESSING                       PostSleepProcessing

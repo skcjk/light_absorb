@@ -95,14 +95,13 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 __weak void PreSleepProcessing(uint32_t ulExpectedIdleTime)
 {
 /* place for user code */
-  printf("pre\r\n");
+  // HAL_SuspendTick();
   __HAL_RCC_GPIOB_CLK_DISABLE(); 
   __HAL_RCC_GPIOC_CLK_DISABLE();  
   __HAL_RCC_GPIOD_CLK_DISABLE();  
   __HAL_RCC_GPIOE_CLK_DISABLE();  
   __HAL_RCC_GPIOF_CLK_DISABLE();
   __HAL_RCC_GPIOG_CLK_DISABLE();
-
 }
 
 __weak void PostSleepProcessing(uint32_t ulExpectedIdleTime)
@@ -114,7 +113,8 @@ __weak void PostSleepProcessing(uint32_t ulExpectedIdleTime)
   __HAL_RCC_GPIOE_CLK_ENABLE();  
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
-  printf("post\r\n");
+  // HAL_ResumeTick();
+  // printf("1\r\n");
 }
 /* USER CODE END PREPOSTSLEEP */
 
@@ -182,12 +182,12 @@ void StartDefaultTask(void *argument)
 
   // res_sd = f_mount(&fs, "0:", 1);
 
-  // /*----------------------- 格式化测�???????????? ---------------------------*/
+  // /*----------------------- 格式化测�?????????????? ---------------------------*/
   // /* 如果没有文件系统就格式化创建创建文件系统 */
   // if (res_sd == FR_NO_FILESYSTEM)
   // {
   //   printf("》SD has no FILESYSTEM, create FILESYSTEM ing\r\n");
-  //   /* 格式�???????????? */
+  //   /* 格式�?????????????? */
   //   res_sd = f_mkfs("0:", FM_FAT32, 512, bpData, 512);
   //   if (res_sd == FR_OK)
   //   {
@@ -233,7 +233,7 @@ void StartDefaultTask(void *argument)
   //   {
   //     printf("write_error(%d)\n", res_sd);
   //   }
-  //   /* 不再读写，关闭文�???????????? */
+  //   /* 不再读写，关闭文�?????????????? */
   //   f_close(&fnew);
   // }
   // else
@@ -262,10 +262,10 @@ void StartDefaultTask(void *argument)
   // {
   //   printf("open error\r\n");
   // }
-  // /* 不再读写，关闭文�???????????? */
+  // /* 不再读写，关闭文�?????????????? */
   // f_close(&fnew);
 
-  // /* 不再使用文件系统，取消挂载文件系�???????????? */
+  // /* 不再使用文件系统，取消挂载文件系�?????????????? */
   // f_mount(NULL, "0:", 1);
 
   // // char *test = "test\r\n";

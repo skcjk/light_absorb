@@ -21,7 +21,7 @@ void CMDTask(void *argument)
         {"time", timeRTC},
     };
 
-    HAL_UART_Receive_IT(&huart1, (uint8_t *)&aRxBuffer, 1);
+    HAL_UART_Receive_IT(&huart3, (uint8_t *)&aRxBuffer, 1);
 
     while (1)
     {
