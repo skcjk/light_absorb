@@ -206,7 +206,7 @@ int fputc(int ch, FILE *f)
  
 {
  
-  HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, 0xffff);
+  HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xffff);
  
   return ch;
  
@@ -238,6 +238,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     }
   }
 
-  HAL_UART_Receive_IT(&huart3, (uint8_t *)&aRxBuffer, 1); //
+  HAL_UART_Receive_IT(&huart1, (uint8_t *)&aRxBuffer, 1); //
 }
 /* USER CODE END 1 */

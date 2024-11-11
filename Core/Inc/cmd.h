@@ -7,7 +7,14 @@
 #include <stdlib.h>
 #include "cmsis_os.h"
 
-typedef void (*callback)(cJSON *root);
+#define JSON_CMD_OK 0
+#define JSON_PARSE_ERROR 1
+#define CMD_ERROR 2
+#define ARGV_ERROR 3
+#define NO_SUCH_CMD 4
+#define OS_ERROR 4
+
+typedef uint8_t (*callback)(cJSON *root);
 
 typedef struct
 {
@@ -17,8 +24,10 @@ typedef struct
 
 void CMDTask(void *argument);
 
-void sum(cJSON *root);
-void reboot(cJSON *root);
-void readADC(cJSON *root);
-void switch12V(cJSON *root);
-void timeRTC(cJSON *root);
+uint8_t sum(cJSON *root);
+uint8_t reboot(cJSON *root);
+uint8_t readADC(cJSON *root);
+uint8_t switch12V(cJSON *root);
+uint8_t timeRTC(cJSON *root);
+uint8_t sdCMD(cJSON *root);
+uint8_t record(cJSON *root);

@@ -1,0 +1,1 @@
+void RecordTask(void *argument);

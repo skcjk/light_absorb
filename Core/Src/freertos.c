@@ -25,10 +25,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "fatfs.h"
 #include "stdio.h"
 #include "adc.h"
 #include "usart.h"
+#include "SDTask.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -38,13 +38,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-FATFS fs;                         /* FatFs文件系统对象 */
-FIL fnew;                         /* 文件对象 */
-FRESULT res_sd;                /* 文件操作结果 */
-UINT fnum;                        /* 文件成功读写数量 */
-BYTE ReadBuffer[1024]= {0};       /* 读缓冲区 */
-BYTE bpData[512] =  {0};   
-BYTE WriteBuffer[] =   "test\r\n";         /* 写缓冲区*/
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -60,8 +54,8 @@ BYTE WriteBuffer[] =   "test\r\n";         /* 写缓冲区*/
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 256 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for cmdTask */
 osThreadId_t cmdTaskHandle;
@@ -70,10 +64,29 @@ const osThreadAttr_t cmdTask_attributes = {
   .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityHigh,
 };
+/* Definitions for sdTask */
+osThreadId_t sdTaskHandle;
+const osThreadAttr_t sdTask_attributes = {
+  .name = "sdTask",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for recordTask */
+osThreadId_t recordTaskHandle;
+const osThreadAttr_t recordTask_attributes = {
+  .name = "recordTask",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* Definitions for rxQueue */
 osMessageQueueId_t rxQueueHandle;
 const osMessageQueueAttr_t rxQueue_attributes = {
   .name = "rxQueue"
+};
+/* Definitions for sdCmdQueue */
+osMessageQueueId_t sdCmdQueueHandle;
+const osMessageQueueAttr_t sdCmdQueue_attributes = {
+  .name = "sdCmdQueue"
 };
 /* Definitions for printMutex */
 osMutexId_t printMutexHandle;
@@ -88,35 +101,10 @@ const osMutexAttr_t printMutex_attributes = {
 
 void StartDefaultTask(void *argument);
 extern void CMDTask(void *argument);
+extern void SDTask(void *argument);
+extern void RecordTask(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
-
-/* USER CODE BEGIN PREPOSTSLEEP */
-__weak void PreSleepProcessing(uint32_t ulExpectedIdleTime)
-{
-/* place for user code */
-  // HAL_SuspendTick();
-  __HAL_RCC_GPIOB_CLK_DISABLE(); 
-  __HAL_RCC_GPIOC_CLK_DISABLE();  
-  __HAL_RCC_GPIOD_CLK_DISABLE();  
-  __HAL_RCC_GPIOE_CLK_DISABLE();  
-  __HAL_RCC_GPIOF_CLK_DISABLE();
-  __HAL_RCC_GPIOG_CLK_DISABLE();
-}
-
-__weak void PostSleepProcessing(uint32_t ulExpectedIdleTime)
-{
-/* place for user code */
-  __HAL_RCC_GPIOB_CLK_ENABLE(); 
-  __HAL_RCC_GPIOC_CLK_ENABLE();  
-  __HAL_RCC_GPIOD_CLK_ENABLE();  
-  __HAL_RCC_GPIOE_CLK_ENABLE();  
-  __HAL_RCC_GPIOF_CLK_ENABLE();
-  __HAL_RCC_GPIOG_CLK_ENABLE();
-  // HAL_ResumeTick();
-  // printf("1\r\n");
-}
-/* USER CODE END PREPOSTSLEEP */
 
 /**
   * @brief  FreeRTOS initialization
@@ -147,6 +135,9 @@ void MX_FREERTOS_Init(void) {
   /* creation of rxQueue */
   rxQueueHandle = osMessageQueueNew (3, sizeof(rxStruct), &rxQueue_attributes);
 
+  /* creation of sdCmdQueue */
+  sdCmdQueueHandle = osMessageQueueNew (1, sizeof(uint16_t), &sdCmdQueue_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -157,6 +148,12 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of cmdTask */
   cmdTaskHandle = osThreadNew(CMDTask, NULL, &cmdTask_attributes);
+
+  /* creation of sdTask */
+  sdTaskHandle = osThreadNew(SDTask, NULL, &sdTask_attributes);
+
+  /* creation of recordTask */
+  recordTaskHandle = osThreadNew(RecordTask, NULL, &recordTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -182,12 +179,12 @@ void StartDefaultTask(void *argument)
 
   // res_sd = f_mount(&fs, "0:", 1);
 
-  // /*----------------------- 格式化测�?????????????? ---------------------------*/
+  // /*----------------------- 格式化测�???????????????? ---------------------------*/
   // /* 如果没有文件系统就格式化创建创建文件系统 */
   // if (res_sd == FR_NO_FILESYSTEM)
   // {
   //   printf("》SD has no FILESYSTEM, create FILESYSTEM ing\r\n");
-  //   /* 格式�?????????????? */
+  //   /* 格式�???????????????? */
   //   res_sd = f_mkfs("0:", FM_FAT32, 512, bpData, 512);
   //   if (res_sd == FR_OK)
   //   {
@@ -233,7 +230,7 @@ void StartDefaultTask(void *argument)
   //   {
   //     printf("write_error(%d)\n", res_sd);
   //   }
-  //   /* 不再读写，关闭文�?????????????? */
+  //   /* 不再读写，关闭文�???????????????? */
   //   f_close(&fnew);
   // }
   // else
@@ -262,10 +259,10 @@ void StartDefaultTask(void *argument)
   // {
   //   printf("open error\r\n");
   // }
-  // /* 不再读写，关闭文�?????????????? */
+  // /* 不再读写，关闭文�???????????????? */
   // f_close(&fnew);
 
-  // /* 不再使用文件系统，取消挂载文件系�?????????????? */
+  // /* 不再使用文件系统，取消挂载文件系�???????????????? */
   // f_mount(NULL, "0:", 1);
 
   // // char *test = "test\r\n";
