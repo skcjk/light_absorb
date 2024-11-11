@@ -13,7 +13,11 @@ extern char read_path[16];
 extern char delete_path[16];
 extern char WriteBuffer[100];
 extern uint8_t aRxBuffer;	
-extern uint32_t period;
+extern uint32_t period1;
+extern uint32_t period2;
+extern uint32_t quantity;
+extern void RecordTask(void *argument);
+extern const osThreadAttr_t recordTask_attributes;
 
 rxStruct receiveRxFromQueneForCmd;
 
@@ -219,14 +223,19 @@ uint8_t record(cJSON *root){
     cJSON *optItem = cJSON_GetObjectItem(root, "opt");
     if (optItem != NULL && cJSON_IsString(optItem)){
         if (!strcmp(cJSON_GetStringValue(optItem), "off")){
-            vTaskSuspend(recordTaskHandle);
+            osThreadTerminate(recordTaskHandle);
             return JSON_CMD_OK;
         }
         if (!strcmp(cJSON_GetStringValue(optItem), "on")){
-            cJSON *periodItem = cJSON_GetObjectItem(root, "period");
-            if (periodItem != NULL && cJSON_IsNumber(periodItem)){
-                period = cJSON_GetNumberValue(periodItem);
-                vTaskResume(recordTaskHandle);
+            cJSON *period1Item = cJSON_GetObjectItem(root, "period1");
+            cJSON *period2Item = cJSON_GetObjectItem(root, "period2");
+            cJSON *quantityItem = cJSON_GetObjectItem(root, "quantity");
+            if ((period1Item != NULL && cJSON_IsNumber(period1Item)) && (period2Item != NULL && cJSON_IsNumber(period2Item)) && (quantityItem != NULL && cJSON_IsNumber(quantityItem))){
+                period1 = cJSON_GetNumberValue(period1Item);
+                period2 = cJSON_GetNumberValue(period2Item);
+                quantity = cJSON_GetNumberValue(quantityItem);
+                osThreadTerminate(recordTaskHandle);
+                recordTaskHandle = osThreadNew(RecordTask, NULL, &recordTask_attributes);
                 return JSON_CMD_OK;
             }
         }

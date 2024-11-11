@@ -102,7 +102,7 @@ const osMutexAttr_t printMutex_attributes = {
 void StartDefaultTask(void *argument);
 extern void CMDTask(void *argument);
 extern void SDTask(void *argument);
-extern void RecordTask(void *argument);
+// extern void RecordTask(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -153,7 +153,7 @@ void MX_FREERTOS_Init(void) {
   sdTaskHandle = osThreadNew(SDTask, NULL, &sdTask_attributes);
 
   /* creation of recordTask */
-  recordTaskHandle = osThreadNew(RecordTask, NULL, &recordTask_attributes);
+  // recordTaskHandle = osThreadNew(RecordTask, NULL, &recordTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -174,100 +174,6 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void *argument)
 {
-  /* USER CODE BEGIN StartDefaultTask */
-  // printf("\r\n****** SD test ******\r\n");
-
-  // res_sd = f_mount(&fs, "0:", 1);
-
-  // /*----------------------- 格式化测�???????????????? ---------------------------*/
-  // /* 如果没有文件系统就格式化创建创建文件系统 */
-  // if (res_sd == FR_NO_FILESYSTEM)
-  // {
-  //   printf("》SD has no FILESYSTEM, create FILESYSTEM ing\r\n");
-  //   /* 格式�???????????????? */
-  //   res_sd = f_mkfs("0:", FM_FAT32, 512, bpData, 512);
-  //   if (res_sd == FR_OK)
-  //   {
-  //     printf("create FILESYSTEM ok\r\n");
-  //     /* 格式化后，先取消挂载 */
-  //     res_sd = f_mount(NULL, "0:", 1);
-  //     /* 重新挂载 */
-  //     res_sd = f_mount(&fs, "0:", 1);
-  //   }
-  //   else
-  //   {
-  //     printf("create FILESYSTEM error\r\n");
-  //     while (1)
-  //       ;
-  //   }
-  // }
-  // else if (res_sd != FR_OK)
-  // {
-  //   printf("mount error(%d)\r\n", res_sd);
-  //   while (1)
-  //     ;
-  // }
-  // else
-  // {
-  //   printf("mount ok\r\n");
-  // }
-
-  // /*--------------------- 文件系统测试：写测试 -----------------------*/
-  // /* 打开文件，如果文件不存在则创建它 */
-  // printf("\r\n****** read and write test ******\r\n");
-  // res_sd = f_open(&fnew, "0:FatFs_read_and_write.txt", FA_CREATE_ALWAYS | FA_WRITE);
-  // if (res_sd == FR_OK)
-  // {
-  //   printf("open or creat FatFs_read_and_write.txt ok\r\n");
-  //   /* 将指定存储区内容写入到文件内 */
-  //   res_sd = f_write(&fnew, WriteBuffer, sizeof(WriteBuffer), &fnum);
-  //   if (res_sd == FR_OK)
-  //   {
-  //     printf("write_ok:%d\n", fnum);
-  //     printf("write_data is:\r\n%s\r\n", WriteBuffer);
-  //   }
-  //   else
-  //   {
-  //     printf("write_error(%d)\n", res_sd);
-  //   }
-  //   /* 不再读写，关闭文�???????????????? */
-  //   f_close(&fnew);
-  // }
-  // else
-  // {
-  //   printf("open or creat FatFs_read_and_write.txt error:%d\r\n", res_sd);
-  // }
-
-  // /*------------------ 文件系统测试：读测试 --------------------------*/
-  // printf("****** read test ******\r\n");
-  // res_sd = f_open(&fnew, "0:FatFs_read_and_write.txt", FA_OPEN_EXISTING | FA_READ);
-  // if (res_sd == FR_OK)
-  // {
-  //   printf("open ok\r\n");
-  //   res_sd = f_read(&fnew, ReadBuffer, sizeof(ReadBuffer), &fnum);
-  //   if (res_sd == FR_OK)
-  //   {
-  //     printf("read byte:%d\r\n", fnum);
-  //     printf("data is:\r\n%s \r\n", ReadBuffer);
-  //   }
-  //   else
-  //   {
-  //     printf("read error:(%d)\n", res_sd);
-  //   }
-  // }
-  // else
-  // {
-  //   printf("open error\r\n");
-  // }
-  // /* 不再读写，关闭文�???????????????? */
-  // f_close(&fnew);
-
-  // /* 不再使用文件系统，取消挂载文件系�???????????????? */
-  // f_mount(NULL, "0:", 1);
-
-  // // char *test = "test\r\n";
-  // HAL_UART_Receive_IT(&huart1, (uint8_t *)&aRxBuffer, 1);
-  /* Infinite loop */
   for (;;)
   {
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7);
