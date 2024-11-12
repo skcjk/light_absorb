@@ -9,8 +9,8 @@ FATFS fs;                         /* FatFs文件系统对象 */                 
 // BYTE ReadBuffer[1024]= {0};       /* 读缓冲区 */
 // BYTE bpData[512] =  {0};   
 char WriteBuffer[100]= {0};
-char read_path[16] = {0};
-char delete_path[16] = {0};
+char read_path[64] = {0};
+char delete_path[64] = {0};
 
 extern osMessageQueueId_t sdCmdQueueHandle;
 extern osMutexId_t printMutexHandle;
