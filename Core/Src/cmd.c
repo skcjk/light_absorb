@@ -189,7 +189,10 @@ uint8_t sdCMD(cJSON *root){
             sd_cmd = SD_WRITE;
             res = JSON_CMD_OK;
         }
-        if (!strcmp(opt_str, "delete_all")) sd_cmd = SD_DELETE_ALL;
+        if (!strcmp(opt_str, "delete_all")){
+            sd_cmd = SD_DELETE_ALL;
+            res = JSON_CMD_OK;
+        }
         if (!strcmp(opt_str, "read")){
             cJSON *pathItem = cJSON_GetObjectItem(root, "path");
             if (pathItem != NULL && cJSON_IsString(pathItem)){
