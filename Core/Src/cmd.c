@@ -35,7 +35,7 @@ void CMDTask(void *argument)
     };
     uint8_t res = NO_SUCH_CMD;
 
-    HAL_UART_Receive_IT(&huart1, (uint8_t *)&aRxBuffer, 1);
+    HAL_UART_Receive_IT(&huart3, (uint8_t *)&aRxBuffer, 1);
 
     while (1)
     {
