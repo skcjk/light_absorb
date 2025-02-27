@@ -131,7 +131,7 @@ void MX_RTC_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN RTC_Init 2 */
-  RTC_DateStruct = sDate;                                // 把日期数据拷贝到自己定义的data�?
+  RTC_DateStruct = sDate;                                // 把日期数据拷贝到自己定义的data�?
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x5051); // 向指定的后备域寄存器写入数据
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR2, (uint16_t)RTC_DateStruct.Year);
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR3, (uint16_t)RTC_DateStruct.Month);

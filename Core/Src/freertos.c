@@ -174,7 +174,9 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void *argument)
 {
-  for (;;)
+  /* USER CODE BEGIN StartDefaultTask */
+  /* Infinite loop */
+  for(;;)
   {
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7);
     osDelay(1000);
