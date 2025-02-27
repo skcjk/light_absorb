@@ -175,11 +175,23 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
+  uint32_t LEAK_voltage;
   /* Infinite loop */
   for(;;)
   {
+    LEAK_voltage = read_leak_voltage();
+    if (LEAK_voltage < 1000)
+    {
+      for(;;)
+      {
+        osMutexAcquire(printMutexHandle, osWaitForever);
+        printf("LEAK!!!\r\n");
+        osMutexRelease(printMutexHandle);
+        osDelay(10);
+      }
+    }
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7);
-    osDelay(1000);
+    osDelay(100);
   }
   /* USER CODE END StartDefaultTask */
 }

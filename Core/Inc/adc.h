@@ -38,6 +38,7 @@ extern ADC_HandleTypeDef hadc2;
 
 /* USER CODE BEGIN Private defines */
 uint32_t read_adc(void);
+uint32_t read_leak_voltage(void);
 /* USER CODE END Private defines */
 
 void MX_ADC1_Init(void);

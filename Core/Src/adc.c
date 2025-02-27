@@ -220,4 +220,15 @@ uint32_t read_adc()
     }
     return 0;
   }
+
+  uint32_t read_leak_voltage()
+  {
+    HAL_ADC_Start(&hadc2);
+    HAL_ADC_PollForConversion(&hadc2, 50);
+    if (HAL_IS_BIT_SET(HAL_ADC_GetState(&hadc2), HAL_ADC_STATE_REG_EOC))
+    {
+      return HAL_ADC_GetValue(&hadc2);
+    }
+    return 0;
+  }
 /* USER CODE END 1 */
